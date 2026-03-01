@@ -1,0 +1,117 @@
+/* ===== 全域設定 ===== */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Noto Sans TC", sans-serif;
+  background: #f4f6f9;
+  margin: 0;
+  padding: 20px;
+  color: #333;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+h2 {
+  margin-bottom: 15px;
+}
+
+/* ===== 卡片樣式 ===== */
+.section {
+  background: white;
+  padding: 20px;
+  margin-bottom: 25px;
+  border-radius: 12px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+}
+
+/* ===== 輸入框 ===== */
+input[type="text"],
+input[type="number"],
+input[type="date"] {
+  width: 100%;
+  padding: 8px 10px;
+  margin-top: 5px;
+  margin-bottom: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  transition: 0.2s;
+}
+
+input:focus {
+  border-color: #4f46e5;
+  outline: none;
+}
+
+/* ===== 按鈕 ===== */
+button {
+  background: #4f46e5;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+button:hover {
+  background: #4338ca;
+}
+
+/* ===== 成員列表 ===== */
+.member-row {
+  padding: 6px 0;
+  border-bottom: 1px solid #eee;
+}
+
+/* ===== payer / sharer 區塊 ===== */
+.payer-row,
+.sharer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.payer-row input[type="number"],
+.sharer-row input[type="number"] {
+  width: 90px;
+}
+
+/* ===== 結算區塊 ===== */
+.summary-box {
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  background: #eef2ff;
+}
+
+/* ===== 響應式 (手機優化) ===== */
+@media (max-width: 600px) {
+
+  body {
+    padding: 10px;
+  }
+
+  .payer-row,
+  .sharer-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .payer-row input[type="number"],
+  .sharer-row input[type="number"] {
+    width: 100%;
+  }
+
+  button {
+    width: 100%;
+    margin-top: 10px;
+  }
+}
