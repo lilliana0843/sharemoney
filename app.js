@@ -1,162 +1,235 @@
-let trip = {
-  members: [],
-  expenses: []
-};
+let groups = [];
+let currentGroupId = null;
+let payerMode = "auto";
+let sharerMode = "auto";
 
-// ===== 新增成員 =====
-function addMember() {
-  const nameInput = document.getElementById("memberName");
-  const name = nameInput.value.trim();
+function getCurrentGroup(){
+  return groups.find(g => g.id === currentGroupId);
+}
 
-  if (!name) return;
+/* ========= 群組 ========= */
 
-  trip.members.push({
+function createGroup(){
+  const name = document.getElementById("groupName").value.trim();
+  if(!name) return;
+
+  const group = {
     id: Date.now(),
-    name: name
-  });
+    name,
+    members: [],
+    expenses: []
+  };
 
-  nameInput.value = "";
+  groups.push(group);
+  currentGroupId = group.id;
+  document.getElementById("groupName").value="";
+  renderGroups();
   renderMembers();
 }
 
-// ===== 渲染成員 + payer + sharer =====
-function renderMembers() {
-  const memberList = document.getElementById("memberList");
-  const payerContainer = document.getElementById("payerContainer");
-  const sharerContainer = document.getElementById("sharerContainer");
-
-  memberList.innerHTML = "";
-  payerContainer.innerHTML = "";
-  sharerContainer.innerHTML = "";
-
-  trip.members.forEach(member => {
-
-    // 成員列表
-    const div = document.createElement("div");
-    div.className = "member-row";
-    div.textContent = member.name;
-    memberList.appendChild(div);
-
-    // 付款人
-    const payerRow = document.createElement("div");
-    payerRow.className = "payer-row";
-    payerRow.dataset.id = member.id;
-
-    payerRow.innerHTML = `
-      <input type="checkbox" class="payer-check">
-      <span>${member.name}</span>
-      <input type="number" class="payer-amount" placeholder="金額">
-    `;
-    payerContainer.appendChild(payerRow);
-
-    // 分攤人
-    const sharerRow = document.createElement("div");
-    sharerRow.className = "sharer-row";
-    sharerRow.dataset.id = member.id;
-
-    sharerRow.innerHTML = `
-      <input type="checkbox" class="sharer-check">
-      <span>${member.name}</span>
-      <input type="number" class="sharer-amount" placeholder="金額">
-    `;
-    sharerContainer.appendChild(sharerRow);
+function renderGroups(){
+  const div = document.getElementById("groupList");
+  div.innerHTML="";
+  groups.forEach(g=>{
+    const btn = document.createElement("button");
+    btn.textContent = g.name;
+    btn.onclick = ()=>{ currentGroupId=g.id; renderMembers(); renderExpenses(); calculateSummary(); }
+    div.appendChild(btn);
   });
 }
 
-// ===== 新增支出 =====
-function addExpense() {
-  const date = document.getElementById("expenseDate").value;
-  const item = document.getElementById("expenseItem").value;
-  const amount = Number(document.getElementById("expenseAmount").value);
+/* ========= 成員 ========= */
 
-  if (!date || !item || !amount) {
-    alert("請填完整資料");
+function addMember(){
+  const group = getCurrentGroup();
+  if(!group) return alert("請先建立群組");
+
+  const name = document.getElementById("memberName").value.trim();
+  if(!name) return;
+
+  group.members.push({id:Date.now(), name});
+  document.getElementById("memberName").value="";
+  renderMembers();
+}
+
+function renderMembers(){
+  const group = getCurrentGroup();
+  if(!group) return;
+
+  const memberList=document.getElementById("memberList");
+  const payerContainer=document.getElementById("payerContainer");
+  const sharerContainer=document.getElementById("sharerContainer");
+
+  memberList.innerHTML="";
+  payerContainer.innerHTML="";
+  sharerContainer.innerHTML="";
+
+  group.members.forEach(m=>{
+    memberList.innerHTML += `<div>${m.name}</div>`;
+
+    payerContainer.innerHTML += `
+      <div class="row payer-row" data-id="${m.id}">
+        <input type="checkbox" class="payer-check" onchange="updatePayerAmounts()">
+        ${m.name}
+        <input type="number" class="payer-amount" disabled>
+      </div>`;
+
+    sharerContainer.innerHTML += `
+      <div class="row sharer-row" data-id="${m.id}">
+        <input type="checkbox" class="sharer-check" onchange="updateSharerAmounts()">
+        ${m.name}
+        <input type="number" class="sharer-amount" disabled>
+      </div>`;
+  });
+}
+
+/* ========= 自動平均邏輯 ========= */
+
+function togglePayerMode(){
+  payerMode = payerMode==="auto"?"manual":"auto";
+  updatePayerAmounts();
+}
+
+function toggleSharerMode(){
+  sharerMode = sharerMode==="auto"?"manual":"auto";
+  updateSharerAmounts();
+}
+
+function autoSplit(rows,total,mode,className){
+  if(rows.length===0) return;
+
+  if(mode==="manual"){
+    rows.forEach(r=> r.querySelector(className).disabled=false);
     return;
   }
 
-  let payers = [];
-  let sharers = [];
+  const avg=Math.floor(total/rows.length);
+  let remainder= total-avg*rows.length;
 
-  // 取得付款人
-  document.querySelectorAll(".payer-row").forEach(row => {
-    const checked = row.querySelector(".payer-check").checked;
-    const memberId = Number(row.dataset.id);
-    const payAmount = Number(row.querySelector(".payer-amount").value);
+  rows.forEach((r,i)=>{
+    let value=avg;
+    if(i===rows.length-1) value+=remainder;
+    const input=r.querySelector(className);
+    input.value=value;
+    input.disabled=true;
+  });
+}
 
-    if (checked && payAmount > 0) {
-      payers.push({ memberId, amount: payAmount });
+function updatePayerAmounts(){
+  const total=Number(document.getElementById("expenseAmount").value);
+  const rows=[...document.querySelectorAll(".payer-row")]
+    .filter(r=>r.querySelector(".payer-check").checked);
+  autoSplit(rows,total,payerMode,".payer-amount");
+}
+
+function updateSharerAmounts(){
+  const total=Number(document.getElementById("expenseAmount").value);
+  const rows=[...document.querySelectorAll(".sharer-row")]
+    .filter(r=>r.querySelector(".sharer-check").checked);
+  autoSplit(rows,total,sharerMode,".sharer-amount");
+}
+
+/* ========= 支出 ========= */
+
+function addExpense(){
+  const group=getCurrentGroup();
+  if(!group) return alert("請先建立群組");
+
+  const date=document.getElementById("expenseDate").value;
+  const item=document.getElementById("expenseItem").value;
+  const amount=Number(document.getElementById("expenseAmount").value);
+
+  let payers=[], sharers=[];
+
+  document.querySelectorAll(".payer-row").forEach(r=>{
+    if(r.querySelector(".payer-check").checked){
+      payers.push({
+        memberId:Number(r.dataset.id),
+        amount:Number(r.querySelector(".payer-amount").value)
+      });
     }
   });
 
-  // 取得分攤人
-  document.querySelectorAll(".sharer-row").forEach(row => {
-    const checked = row.querySelector(".sharer-check").checked;
-    const memberId = Number(row.dataset.id);
-    const shareAmount = Number(row.querySelector(".sharer-amount").value);
-
-    if (checked && shareAmount > 0) {
-      sharers.push({ memberId, amount: shareAmount });
+  document.querySelectorAll(".sharer-row").forEach(r=>{
+    if(r.querySelector(".sharer-check").checked){
+      sharers.push({
+        memberId:Number(r.dataset.id),
+        amount:Number(r.querySelector(".sharer-amount").value)
+      });
     }
   });
 
-  trip.expenses.push({
-    id: Date.now(),
-    date,
-    item,
-    amount,
-    payers,
-    sharers
-  });
+  group.expenses.push({id:Date.now(),date,item,amount,payers,sharers});
 
-  clearExpenseForm();
+  renderExpenses();
   calculateSummary();
 }
 
-// ===== 清空表單 =====
-function clearExpenseForm() {
-  document.getElementById("expenseDate").value = "";
-  document.getElementById("expenseItem").value = "";
-  document.getElementById("expenseAmount").value = "";
+function renderExpenses(){
+  const group=getCurrentGroup();
+  if(!group) return;
 
-  document.querySelectorAll("input[type=checkbox]").forEach(c => c.checked = false);
-  document.querySelectorAll(".payer-amount, .sharer-amount").forEach(i => i.value = "");
+  const div=document.getElementById("expenseList");
+  div.innerHTML="";
+
+  group.expenses.forEach(e=>{
+    div.innerHTML += `
+      <div class="expense-card">
+        ${e.date} - ${e.item} - ${e.amount}元
+      </div>`;
+  });
 }
 
-// ===== 計算結算 =====
-function calculateSummary() {
-  let balance = {};
+/* ========= 計算 & 清算 ========= */
 
-  trip.members.forEach(m => {
-    balance[m.id] = 0;
+function calculateSummary(){
+  const group=getCurrentGroup();
+  if(!group) return;
+
+  let balance={};
+  group.members.forEach(m=> balance[m.id]=0);
+
+  group.expenses.forEach(e=>{
+    e.payers.forEach(p=> balance[p.memberId]+=p.amount);
+    e.sharers.forEach(s=> balance[s.memberId]-=s.amount);
   });
 
-  trip.expenses.forEach(expense => {
-    expense.payers.forEach(p => {
-      balance[p.memberId] += p.amount;
-    });
+  const summary=document.getElementById("summary");
+  summary.innerHTML="";
 
-    expense.sharers.forEach(s => {
-      balance[s.memberId] -= s.amount;
-    });
+  group.members.forEach(m=>{
+    const val=balance[m.id];
+    summary.innerHTML += `<div class="summary-box">
+      ${m.name}：${val>0?"應收":"應付"} ${Math.abs(val)} 元
+    </div>`;
   });
 
-  const summaryDiv = document.getElementById("summary");
-  summaryDiv.innerHTML = "";
+  generateSettlement(balance,group.members);
+}
 
-  trip.members.forEach(member => {
-    const div = document.createElement("div");
-    div.className = "summary-box";
+function generateSettlement(balance,members){
+  const settlement=document.getElementById("settlement");
+  settlement.innerHTML="";
 
-    const money = balance[member.id];
+  let creditors=[], debtors=[];
 
-    if (money > 0) {
-      div.textContent = `${member.name} 應收 ${money} 元`;
-    } else if (money < 0) {
-      div.textContent = `${member.name} 應付 ${Math.abs(money)} 元`;
-    } else {
-      div.textContent = `${member.name} 已結清`;
-    }
+  Object.keys(balance).forEach(id=>{
+    if(balance[id]>0) creditors.push({id,amount:balance[id]});
+    if(balance[id]<0) debtors.push({id,amount:-balance[id]});
+  });
 
-    summaryDiv.appendChild(div);
+  creditors.forEach(c=>{
+    debtors.forEach(d=>{
+      if(c.amount>0 && d.amount>0){
+        const pay=Math.min(c.amount,d.amount);
+        c.amount-=pay;
+        d.amount-=pay;
+
+        const creditorName=members.find(m=>m.id==c.id).name;
+        const debtorName=members.find(m=>m.id==d.id).name;
+
+        settlement.innerHTML+=`<div>${debtorName} ➜ ${creditorName} ： ${pay} 元</div>`;
+      }
+    });
   });
 }
