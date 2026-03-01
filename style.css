@@ -2,7 +2,7 @@
    全域設定
 ========================= */
 * {
-  box-sizing: border-box;
+  box-sizing: 80%;
 }
 
 body {
