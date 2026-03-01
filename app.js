@@ -1,235 +1,291 @@
+/* =========================
+   全域資料結構
+========================= */
+
+// 儲存所有群組
 let groups = [];
-let currentGroupId = null;
-let payerMode = "auto";
-let sharerMode = "auto";
 
-function getCurrentGroup(){
-  return groups.find(g => g.id === currentGroupId);
-}
+// 目前選中的群組 index
+let currentGroupIndex = null;
 
-/* ========= 群組 ========= */
+// 是否為手動模式
+let manualPayer = false;
+let manualSharer = false;
 
-function createGroup(){
+
+/* =========================
+   群組功能
+========================= */
+
+// 新增群組
+function createGroup() {
   const name = document.getElementById("groupName").value.trim();
-  if(!name) return;
+  if (!name) return alert("請輸入群組名稱");
 
-  const group = {
-    id: Date.now(),
-    name,
+  groups.push({
+    name: name,
     members: [],
     expenses: []
-  };
+  });
 
-  groups.push(group);
-  currentGroupId = group.id;
-  document.getElementById("groupName").value="";
+  document.getElementById("groupName").value = "";
   renderGroups();
-  renderMembers();
 }
 
-function renderGroups(){
-  const div = document.getElementById("groupList");
-  div.innerHTML="";
-  groups.forEach(g=>{
+// 顯示群組按鈕
+function renderGroups() {
+  const container = document.getElementById("groupList");
+  container.innerHTML = "";
+
+  groups.forEach((group, index) => {
     const btn = document.createElement("button");
-    btn.textContent = g.name;
-    btn.onclick = ()=>{ currentGroupId=g.id; renderMembers(); renderExpenses(); calculateSummary(); }
-    div.appendChild(btn);
+    btn.innerText = group.name;
+    btn.onclick = () => selectGroup(index);
+    container.appendChild(btn);
   });
 }
 
-/* ========= 成員 ========= */
+// 選擇群組
+function selectGroup(index) {
+  currentGroupIndex = index;
+  renderMembers();
+  renderExpenses();
+  renderSummary();
+}
 
-function addMember(){
-  const group = getCurrentGroup();
-  if(!group) return alert("請先建立群組");
 
+/* =========================
+   成員功能
+========================= */
+
+// 新增成員
+function addMember() {
   const name = document.getElementById("memberName").value.trim();
-  if(!name) return;
+  if (!name) return alert("請輸入成員名稱");
+  if (currentGroupIndex === null) return alert("請先選擇群組");
 
-  group.members.push({id:Date.now(), name});
-  document.getElementById("memberName").value="";
+  groups[currentGroupIndex].members.push(name);
+  document.getElementById("memberName").value = "";
+
   renderMembers();
 }
 
-function renderMembers(){
-  const group = getCurrentGroup();
-  if(!group) return;
+// 顯示成員
+function renderMembers() {
+  const container = document.getElementById("memberList");
+  container.innerHTML = "";
 
-  const memberList=document.getElementById("memberList");
-  const payerContainer=document.getElementById("payerContainer");
-  const sharerContainer=document.getElementById("sharerContainer");
+  if (currentGroupIndex === null) return;
 
-  memberList.innerHTML="";
-  payerContainer.innerHTML="";
-  sharerContainer.innerHTML="";
+  groups[currentGroupIndex].members.forEach(member => {
+    const div = document.createElement("div");
+    div.className = "member-row";
+    div.innerText = member;
+    container.appendChild(div);
+  });
 
-  group.members.forEach(m=>{
-    memberList.innerHTML += `<div>${m.name}</div>`;
+  renderPayerSharerOptions();
+}
 
-    payerContainer.innerHTML += `
-      <div class="row payer-row" data-id="${m.id}">
-        <input type="checkbox" class="payer-check" onchange="updatePayerAmounts()">
-        ${m.name}
-        <input type="number" class="payer-amount" disabled>
-      </div>`;
 
-    sharerContainer.innerHTML += `
-      <div class="row sharer-row" data-id="${m.id}">
-        <input type="checkbox" class="sharer-check" onchange="updateSharerAmounts()">
-        ${m.name}
-        <input type="number" class="sharer-amount" disabled>
-      </div>`;
+/* =========================
+   付款人 / 分攤人 UI
+========================= */
+
+function renderPayerSharerOptions() {
+  const payerContainer = document.getElementById("payerList");
+  const sharerContainer = document.getElementById("sharerList");
+
+  payerContainer.innerHTML = "";
+  sharerContainer.innerHTML = "";
+
+  const members = groups[currentGroupIndex].members;
+
+  members.forEach((member, index) => {
+
+    // ===== 付款人 =====
+    const payerRow = document.createElement("div");
+    payerRow.className = "payer-row";
+
+    payerRow.innerHTML = `
+      <label>
+        <input type="checkbox" class="payer-checkbox" value="${index}" onchange="autoSplitPayers()">
+        ${member}
+      </label>
+      <input type="number" id="payerAmount_${index}" disabled>
+    `;
+
+    payerContainer.appendChild(payerRow);
+
+    // ===== 分攤人 =====
+    const sharerRow = document.createElement("div");
+    sharerRow.className = "sharer-row";
+
+    sharerRow.innerHTML = `
+      <label>
+        <input type="checkbox" class="sharer-checkbox" value="${index}" onchange="autoSplitSharers()">
+        ${member}
+      </label>
+      <input type="number" id="sharerAmount_${index}" disabled>
+    `;
+
+    sharerContainer.appendChild(sharerRow);
   });
 }
 
-/* ========= 自動平均邏輯 ========= */
 
-function togglePayerMode(){
-  payerMode = payerMode==="auto"?"manual":"auto";
-  updatePayerAmounts();
+/* =========================
+   自動均分邏輯（小數點兩位）
+========================= */
+
+// 自動均分付款人
+function autoSplitPayers() {
+  if (manualPayer) return;
+
+  const total = parseFloat(document.getElementById("amount").value);
+  if (!total) return;
+
+  const checked = document.querySelectorAll(".payer-checkbox:checked");
+  if (checked.length === 0) return;
+
+  const average = (total / checked.length).toFixed(2);
+
+  checked.forEach(cb => {
+    const input = document.getElementById("payerAmount_" + cb.value);
+    input.disabled = false;
+    input.value = average;
+  });
 }
 
-function toggleSharerMode(){
-  sharerMode = sharerMode==="auto"?"manual":"auto";
-  updateSharerAmounts();
+// 自動均分分攤人
+function autoSplitSharers() {
+  if (manualSharer) return;
+
+  const total = parseFloat(document.getElementById("amount").value);
+  if (!total) return;
+
+  const checked = document.querySelectorAll(".sharer-checkbox:checked");
+  if (checked.length === 0) return;
+
+  const average = (total / checked.length).toFixed(2);
+
+  checked.forEach(cb => {
+    const input = document.getElementById("sharerAmount_" + cb.value);
+    input.disabled = false;
+    input.value = average;
+  });
 }
 
-function autoSplit(rows,total,mode,className){
-  if(rows.length===0) return;
 
-  if(mode==="manual"){
-    rows.forEach(r=> r.querySelector(className).disabled=false);
-    return;
+/* =========================
+   手動模式切換
+========================= */
+
+function toggleManualPayer() {
+  manualPayer = !manualPayer;
+}
+
+function toggleManualSharer() {
+  manualSharer = !manualSharer;
+}
+
+
+/* =========================
+   新增支出
+========================= */
+
+function addExpense() {
+  if (currentGroupIndex === null) return alert("請先選擇群組");
+
+  const date = document.getElementById("date").value;
+  const item = document.getElementById("item").value;
+  const total = parseFloat(document.getElementById("amount").value);
+
+  if (!date || !item || !total) {
+    return alert("請填寫完整資料");
   }
 
-  const avg=Math.floor(total/rows.length);
-  let remainder= total-avg*rows.length;
+  const payers = {};
+  const sharers = {};
 
-  rows.forEach((r,i)=>{
-    let value=avg;
-    if(i===rows.length-1) value+=remainder;
-    const input=r.querySelector(className);
-    input.value=value;
-    input.disabled=true;
-  });
-}
-
-function updatePayerAmounts(){
-  const total=Number(document.getElementById("expenseAmount").value);
-  const rows=[...document.querySelectorAll(".payer-row")]
-    .filter(r=>r.querySelector(".payer-check").checked);
-  autoSplit(rows,total,payerMode,".payer-amount");
-}
-
-function updateSharerAmounts(){
-  const total=Number(document.getElementById("expenseAmount").value);
-  const rows=[...document.querySelectorAll(".sharer-row")]
-    .filter(r=>r.querySelector(".sharer-check").checked);
-  autoSplit(rows,total,sharerMode,".sharer-amount");
-}
-
-/* ========= 支出 ========= */
-
-function addExpense(){
-  const group=getCurrentGroup();
-  if(!group) return alert("請先建立群組");
-
-  const date=document.getElementById("expenseDate").value;
-  const item=document.getElementById("expenseItem").value;
-  const amount=Number(document.getElementById("expenseAmount").value);
-
-  let payers=[], sharers=[];
-
-  document.querySelectorAll(".payer-row").forEach(r=>{
-    if(r.querySelector(".payer-check").checked){
-      payers.push({
-        memberId:Number(r.dataset.id),
-        amount:Number(r.querySelector(".payer-amount").value)
-      });
-    }
+  // 收集付款人資料
+  document.querySelectorAll(".payer-checkbox:checked").forEach(cb => {
+    const amount = parseFloat(
+      document.getElementById("payerAmount_" + cb.value).value
+    );
+    payers[cb.value] = amount;
   });
 
-  document.querySelectorAll(".sharer-row").forEach(r=>{
-    if(r.querySelector(".sharer-check").checked){
-      sharers.push({
-        memberId:Number(r.dataset.id),
-        amount:Number(r.querySelector(".sharer-amount").value)
-      });
-    }
+  // 收集分攤人資料
+  document.querySelectorAll(".sharer-checkbox:checked").forEach(cb => {
+    const amount = parseFloat(
+      document.getElementById("sharerAmount_" + cb.value).value
+    );
+    sharers[cb.value] = amount;
   });
 
-  group.expenses.push({id:Date.now(),date,item,amount,payers,sharers});
+  groups[currentGroupIndex].expenses.push({
+    date,
+    item,
+    total,
+    payers,
+    sharers
+  });
 
   renderExpenses();
-  calculateSummary();
+  renderSummary();
 }
 
-function renderExpenses(){
-  const group=getCurrentGroup();
-  if(!group) return;
 
-  const div=document.getElementById("expenseList");
-  div.innerHTML="";
+/* =========================
+   顯示支出
+========================= */
 
-  group.expenses.forEach(e=>{
-    div.innerHTML += `
-      <div class="expense-card">
-        ${e.date} - ${e.item} - ${e.amount}元
-      </div>`;
+function renderExpenses() {
+  const container = document.getElementById("expenseList");
+  container.innerHTML = "";
+
+  if (currentGroupIndex === null) return;
+
+  groups[currentGroupIndex].expenses.forEach(exp => {
+    const div = document.createElement("div");
+    div.className = "expense-card";
+    div.innerText = `${exp.date} - ${exp.item} - $${exp.total}`;
+    container.appendChild(div);
   });
 }
 
-/* ========= 計算 & 清算 ========= */
 
-function calculateSummary(){
-  const group=getCurrentGroup();
-  if(!group) return;
+/* =========================
+   結算計算
+========================= */
 
-  let balance={};
-  group.members.forEach(m=> balance[m.id]=0);
+function renderSummary() {
+  const container = document.getElementById("summary");
+  container.innerHTML = "";
 
-  group.expenses.forEach(e=>{
-    e.payers.forEach(p=> balance[p.memberId]+=p.amount);
-    e.sharers.forEach(s=> balance[s.memberId]-=s.amount);
+  if (currentGroupIndex === null) return;
+
+  const members = groups[currentGroupIndex].members;
+  const balances = Array(members.length).fill(0);
+
+  groups[currentGroupIndex].expenses.forEach(exp => {
+
+    // 付款人加錢
+    for (let i in exp.payers) {
+      balances[i] += exp.payers[i];
+    }
+
+    // 分攤人扣錢
+    for (let i in exp.sharers) {
+      balances[i] -= exp.sharers[i];
+    }
   });
 
-  const summary=document.getElementById("summary");
-  summary.innerHTML="";
-
-  group.members.forEach(m=>{
-    const val=balance[m.id];
-    summary.innerHTML += `<div class="summary-box">
-      ${m.name}：${val>0?"應收":"應付"} ${Math.abs(val)} 元
-    </div>`;
-  });
-
-  generateSettlement(balance,group.members);
-}
-
-function generateSettlement(balance,members){
-  const settlement=document.getElementById("settlement");
-  settlement.innerHTML="";
-
-  let creditors=[], debtors=[];
-
-  Object.keys(balance).forEach(id=>{
-    if(balance[id]>0) creditors.push({id,amount:balance[id]});
-    if(balance[id]<0) debtors.push({id,amount:-balance[id]});
-  });
-
-  creditors.forEach(c=>{
-    debtors.forEach(d=>{
-      if(c.amount>0 && d.amount>0){
-        const pay=Math.min(c.amount,d.amount);
-        c.amount-=pay;
-        d.amount-=pay;
-
-        const creditorName=members.find(m=>m.id==c.id).name;
-        const debtorName=members.find(m=>m.id==d.id).name;
-
-        settlement.innerHTML+=`<div>${debtorName} ➜ ${creditorName} ： ${pay} 元</div>`;
-      }
-    });
+  balances.forEach((bal, index) => {
+    const div = document.createElement("div");
+    div.className = "summary-box";
+    div.innerText = `${members[index]}：${bal.toFixed(2)} 元`;
+    container.appendChild(div);
   });
 }
