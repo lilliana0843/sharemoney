@@ -222,3 +222,49 @@ function loadData() {
     trip = JSON.parse(data);
   }
 }
+
+function renderMembers() {
+  const memberList = document.getElementById("memberList");
+  const payerContainer = document.getElementById("payerContainer");
+  const sharerContainer = document.getElementById("sharerContainer");
+
+  memberList.innerHTML = "";
+  payerContainer.innerHTML = "";
+  sharerContainer.innerHTML = "";
+
+  trip.members.forEach(member => {
+
+    // 成員列表
+    const div = document.createElement("div");
+    div.className = "member-row";
+    div.textContent = member.name;
+    memberList.appendChild(div);
+
+    // 付款人
+    const payerRow = document.createElement("div");
+    payerRow.className = "payer-row";
+    payerRow.dataset.id = member.id;
+
+    payerRow.innerHTML = `
+      <input type="checkbox" class="payer-check">
+      ${member.name}
+      <input type="number" class="payer-amount" placeholder="金額">
+    `;
+
+    payerContainer.appendChild(payerRow);
+
+    // 分攤人
+    const sharerRow = document.createElement("div");
+    sharerRow.className = "sharer-row";
+    sharerRow.dataset.id = member.id;
+
+    sharerRow.innerHTML = `
+      <input type="checkbox" class="sharer-check">
+      ${member.name}
+      <input type="number" class="sharer-amount" placeholder="金額">
+    `;
+
+    sharerContainer.appendChild(sharerRow);
+  });
+}
+
