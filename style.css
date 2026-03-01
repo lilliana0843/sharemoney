@@ -1,4 +1,6 @@
-/* ===== 全域設定 ===== */
+/* =========================
+   全域設定
+========================= */
 * {
   box-sizing: border-box;
 }
@@ -20,34 +22,58 @@ h2 {
   margin-bottom: 15px;
 }
 
-/* ===== 卡片樣式 ===== */
+h3 {
+  margin-top: 20px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+
+/* =========================
+   卡片樣式
+========================= */
 .section {
   background: white;
   padding: 20px;
   margin-bottom: 25px;
-  border-radius: 12px;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+  border-radius: 14px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.06);
 }
 
-/* ===== 輸入框 ===== */
+
+/* =========================
+   輸入框
+========================= */
 input[type="text"],
 input[type="number"],
 input[type="date"] {
   width: 100%;
-  padding: 8px 10px;
+  padding: 10px 12px;
   margin-top: 5px;
   margin-bottom: 12px;
   border: 1px solid #ddd;
-  border-radius: 8px;
+  border-radius: 10px;
   transition: 0.2s;
+  font-size: 14px;
 }
 
 input:focus {
   border-color: #4f46e5;
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
   outline: none;
 }
 
-/* ===== 按鈕 ===== */
+input:disabled {
+  background: #f3f4f6;
+  color: #888;
+}
+
+
+/* =========================
+   按鈕
+========================= */
 button {
   background: #4f46e5;
   color: white;
@@ -56,47 +82,111 @@ button {
   border-radius: 8px;
   cursor: pointer;
   transition: 0.2s;
+  font-size: 14px;
 }
 
 button:hover {
   background: #4338ca;
 }
 
-/* ===== 成員列表 ===== */
-.member-row {
-  padding: 6px 0;
-  border-bottom: 1px solid #eee;
+/* 小按鈕（手動模式） */
+h3 button {
+  font-size: 12px;
+  padding: 4px 10px;
+  background: #9ca3af;
 }
 
-/* ===== payer / sharer 區塊 ===== */
+h3 button:hover {
+  background: #6b7280;
+}
+
+
+/* =========================
+   群組按鈕
+========================= */
+#groupList button {
+  margin-right: 8px;
+  margin-bottom: 8px;
+  background: #e0e7ff;
+  color: #4338ca;
+}
+
+#groupList button:hover {
+  background: #c7d2fe;
+}
+
+
+/* =========================
+   成員列表
+========================= */
+.member-row {
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+  font-weight: 500;
+}
+
+
+/* =========================
+   payer / sharer 區塊
+========================= */
 .payer-row,
 .sharer-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  padding: 6px 0;
+  gap: 12px;
+  padding: 8px 0;
   border-bottom: 1px solid #f0f0f0;
 }
 
 .payer-row input[type="number"],
 .sharer-row input[type="number"] {
-  width: 90px;
+  width: 100px;
 }
 
-/* ===== 結算區塊 ===== */
+
+/* =========================
+   支出卡片
+========================= */
+.expense-card {
+  background: #fafafa;
+  padding: 12px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  border: 1px solid #eee;
+  transition: 0.2s;
+}
+
+.expense-card:hover {
+  background: #f3f4ff;
+}
+
+
+/* =========================
+   結算區塊
+========================= */
 .summary-box {
-  padding: 10px;
-  border-radius: 8px;
+  padding: 10px 14px;
+  border-radius: 10px;
   margin-bottom: 8px;
   background: #eef2ff;
+  font-weight: 500;
 }
 
-/* ===== 響應式 (手機優化) ===== */
+#settlement div {
+  padding: 6px 0;
+  border-bottom: 1px dashed #ddd;
+  font-size: 14px;
+}
+
+
+/* =========================
+   響應式（手機）
+========================= */
 @media (max-width: 600px) {
 
   body {
-    padding: 10px;
+    padding: 12px;
   }
 
   .payer-row,
@@ -112,6 +202,15 @@ button:hover {
 
   button {
     width: 100%;
-    margin-top: 10px;
+    margin-top: 8px;
+  }
+
+  h3 {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  h3 button {
+    margin-top: 6px;
   }
 }
