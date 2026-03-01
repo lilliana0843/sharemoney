@@ -1,178 +1,78 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <link rel="stylesheet" href="style.css">
   <meta charset="UTF-8">
-  <title>旅遊分帳系統</title>
+  <title>旅遊分帳系統 Pro</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      max-width: 800px;
-      margin: auto;
-    }
-
-    h2 {
-      margin-top: 40px;
-    }
-
-    input {
-      margin: 5px 0;
-      padding: 5px;
-    }
-
-    button {
-      padding: 6px 12px;
-      margin-top: 10px;
-      cursor: pointer;
-    }
-
-    .section {
-      border: 1px solid #ccc;
-      padding: 15px;
-      margin-top: 20px;
-      border-radius: 8px;
-    }
-
-    .member-row,
-    .payer-row,
-    .sharer-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 5px;
-    }
-
-    .summary-box {
-      background: #f5f5f5;
-      padding: 10px;
-      margin-top: 10px;
-      border-radius: 6px;
-    }
-
-    /* 讓小按鈕看起來比較像模式切換 */
-    .mode-btn {
-      font-size: 12px;
-      padding: 3px 8px;
-      margin-left: 10px;
-      background: #888;
-      color: white;
-      border-radius: 5px;
-    }
-  </style>
+  <!-- 使用你自己的 style.css -->
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <h1>團體旅遊分帳系統</h1>
+<h1>團體旅遊分帳系統 Pro</h1>
 
-  <!-- ========================= -->
-  <!-- 成員管理 -->
-  <!-- ========================= -->
-  <div class="section">
-    <h2>新增成員</h2>
+<!-- ===== 群組管理 ===== -->
+<div class="section">
+  <h2>建立群組</h2>
+  <input type="text" id="groupName" placeholder="例如：沖繩旅行">
+  <button onclick="createGroup()">建立群組</button>
+  <div id="groupList"></div>
+</div>
 
-    <!-- 成員名稱輸入 -->
-    <input type="text" id="memberName" placeholder="輸入成員名字">
+<!-- ===== 成員管理 ===== -->
+<div class="section">
+  <h2>新增成員</h2>
+  <input type="text" id="memberName" placeholder="輸入成員名字">
+  <button onclick="addMember()">新增成員</button>
+  <div id="memberList"></div>
+</div>
 
-    <!-- 新增成員按鈕 -->
-    <button onclick="addMember()">新增成員</button>
+<!-- ===== 新增支出 ===== -->
+<div class="section">
+  <h2>新增支出</h2>
 
-    <!-- 顯示成員清單 -->
-    <div id="memberList"></div>
-  </div>
+  <label>日期</label>
+  <input type="date" id="expenseDate">
 
+  <label>品項</label>
+  <input type="text" id="expenseItem">
 
-  <!-- ========================= -->
-  <!-- 新增支出 -->
-  <!-- ========================= -->
-  <div class="section">
-    <h2>新增支出</h2>
+  <label>金額</label>
+  <input type="number"
+         id="expenseAmount"
+         onchange="updatePayerAmounts(); updateSharerAmounts();">
 
-    <!-- 日期 -->
-    <label>日期：</label><br>
-    <input type="date" id="expenseDate"><br>
+  <h3>
+    付款人
+    <button type="button" onclick="togglePayerMode()">手動</button>
+  </h3>
+  <div id="payerContainer"></div>
 
-    <!-- 品項 -->
-    <label>品項：</label><br>
-    <input type="text" id="expenseItem" placeholder="例如：晚餐"><br>
+  <h3>
+    分攤人
+    <button type="button" onclick="toggleSharerMode()">手動</button>
+  </h3>
+  <div id="sharerContainer"></div>
 
-    <!-- 總金額 -->
-    <label>總金額：</label><br>
+  <button onclick="addExpense()">新增支出</button>
+</div>
 
-    <!-- 
-      當金額改變時：
-      會自動重新計算付款與分攤的平均值
-    -->
-    <input type="number"
-           id="expenseAmount"
-           placeholder="例如：1200"
-           onchange="updatePayerAmounts(); updateSharerAmounts();"><br>
+<!-- ===== 支出列表 ===== -->
+<div class="section">
+  <h2>支出列表</h2>
+  <div id="expenseList"></div>
+</div>
 
+<!-- ===== 結算結果 ===== -->
+<div class="section">
+  <h2>結算結果</h2>
+  <div id="summary"></div>
 
-    <!-- ========================= -->
-    <!-- 付款人 -->
-    <!-- ========================= -->
+  <h3>清算建議</h3>
+  <div id="settlement"></div>
+</div>
 
-    <h3>
-      付款人
-
-      <!-- 
-        切換自動 / 手動模式
-        預設為自動平均分配
-      -->
-      <button type="button"
-              class="mode-btn"
-              onclick="togglePayerMode()">
-        手動調整
-      </button>
-    </h3>
-
-    <!-- JS 會動態產生成員勾選列 -->
-    <div id="payerContainer"></div>
-
-
-    <!-- ========================= -->
-    <!-- 分攤人 -->
-    <!-- ========================= -->
-
-    <h3>
-      分攤人
-
-      <!-- 
-        預設均分
-        點擊後改為手動輸入
-      -->
-      <button type="button"
-              class="mode-btn"
-              onclick="toggleSharerMode()">
-        手動調整
-      </button>
-    </h3>
-
-    <!-- JS 動態生成 -->
-    <div id="sharerContainer"></div>
-
-
-    <!-- 新增支出按鈕 -->
-    <button onclick="addExpense()">新增支出</button>
-  </div>
-
-
-  <!-- ========================= -->
-  <!-- 結算結果 -->
-  <!-- ========================= -->
-  <div class="section">
-    <h2>結算結果</h2>
-
-    <!-- 顯示每人應收應付 -->
-    <div id="summary"></div>
-  </div>
-
-
-  <!-- 載入主程式 -->
-  <script src="app.js"></script>
-
+<script src="app.js"></script>
 </body>
 </html>
