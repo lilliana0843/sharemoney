@@ -51,53 +51,128 @@
       margin-top: 10px;
       border-radius: 6px;
     }
+
+    /* 讓小按鈕看起來比較像模式切換 */
+    .mode-btn {
+      font-size: 12px;
+      padding: 3px 8px;
+      margin-left: 10px;
+      background: #888;
+      color: white;
+      border-radius: 5px;
+    }
   </style>
 </head>
 <body>
 
   <h1>團體旅遊分帳系統</h1>
 
+  <!-- ========================= -->
   <!-- 成員管理 -->
+  <!-- ========================= -->
   <div class="section">
     <h2>新增成員</h2>
 
+    <!-- 成員名稱輸入 -->
     <input type="text" id="memberName" placeholder="輸入成員名字">
+
+    <!-- 新增成員按鈕 -->
     <button onclick="addMember()">新增成員</button>
 
+    <!-- 顯示成員清單 -->
     <div id="memberList"></div>
   </div>
 
 
+  <!-- ========================= -->
   <!-- 新增支出 -->
+  <!-- ========================= -->
   <div class="section">
     <h2>新增支出</h2>
 
+    <!-- 日期 -->
     <label>日期：</label><br>
     <input type="date" id="expenseDate"><br>
 
+    <!-- 品項 -->
     <label>品項：</label><br>
     <input type="text" id="expenseItem" placeholder="例如：晚餐"><br>
 
+    <!-- 總金額 -->
     <label>總金額：</label><br>
-    <input type="number" id="expenseAmount" placeholder="例如：1200"><br>
 
-    <h3>付款人</h3>
+    <!-- 
+      當金額改變時：
+      會自動重新計算付款與分攤的平均值
+    -->
+    <input type="number"
+           id="expenseAmount"
+           placeholder="例如：1200"
+           onchange="updatePayerAmounts(); updateSharerAmounts();"><br>
+
+
+    <!-- ========================= -->
+    <!-- 付款人 -->
+    <!-- ========================= -->
+
+    <h3>
+      付款人
+
+      <!-- 
+        切換自動 / 手動模式
+        預設為自動平均分配
+      -->
+      <button type="button"
+              class="mode-btn"
+              onclick="togglePayerMode()">
+        手動調整
+      </button>
+    </h3>
+
+    <!-- JS 會動態產生成員勾選列 -->
     <div id="payerContainer"></div>
 
-    <h3>分攤人</h3>
+
+    <!-- ========================= -->
+    <!-- 分攤人 -->
+    <!-- ========================= -->
+
+    <h3>
+      分攤人
+
+      <!-- 
+        預設均分
+        點擊後改為手動輸入
+      -->
+      <button type="button"
+              class="mode-btn"
+              onclick="toggleSharerMode()">
+        手動調整
+      </button>
+    </h3>
+
+    <!-- JS 動態生成 -->
     <div id="sharerContainer"></div>
 
+
+    <!-- 新增支出按鈕 -->
     <button onclick="addExpense()">新增支出</button>
   </div>
 
 
+  <!-- ========================= -->
   <!-- 結算結果 -->
+  <!-- ========================= -->
   <div class="section">
     <h2>結算結果</h2>
+
+    <!-- 顯示每人應收應付 -->
     <div id="summary"></div>
   </div>
 
 
+  <!-- 載入主程式 -->
   <script src="app.js"></script>
+
 </body>
 </html>
