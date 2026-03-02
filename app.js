@@ -236,7 +236,7 @@ function addExpense() {
   const item = document.getElementById("item").value;
   const total = parseFloat(document.getElementById("amount").value);
 
-  if (!date || !item || !total)
+  if (!date || !item || isNaN(total))
     return alert("請填寫完整資料");
 
   const payers = {};
