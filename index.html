@@ -5,7 +5,6 @@
   <title>旅遊分帳系統 Pro</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- 使用你自己的 style.css -->
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -33,27 +32,27 @@
   <h2>新增支出</h2>
 
   <label>日期</label>
-  <input type="date" id="expenseDate">
+  <input type="date" id="date">
 
   <label>品項</label>
-  <input type="text" id="expenseItem">
+  <input type="text" id="item">
 
   <label>金額</label>
   <input type="number"
-         id="expenseAmount"
+         id="amount"
          onchange="updatePayerAmounts(); updateSharerAmounts();">
 
   <h3>
     付款人
-    <button type="button" onclick="togglePayerMode()">手動</button>
+    <button type="button" onclick="toggleManualPayer()">手動模式</button>
   </h3>
-  <div id="payerContainer"></div>
+  <div id="payerList"></div>
 
   <h3>
     分攤人
-    <button type="button" onclick="toggleSharerMode()">手動</button>
+    <button type="button" onclick="toggleManualSharer()">手動模式</button>
   </h3>
-  <div id="sharerContainer"></div>
+  <div id="sharerList"></div>
 
   <button onclick="addExpense()">新增支出</button>
 </div>
