@@ -266,20 +266,41 @@ function addExpense() {
 }
 
 
-/* =========================
-   清空表單
-========================= */
-
 function clearExpenseForm() {
+
+  // 清空基本欄位
   document.getElementById("date").value = "";
   document.getElementById("item").value = "";
   document.getElementById("amount").value = "";
 
-  document.querySelectorAll("input[type='checkbox']").forEach(cb => cb.checked = false);
-  document.querySelectorAll("input[type='number']").forEach(input => {
+  // 確保金額欄位可以再次輸入
+  document.getElementById("amount").disabled = false;
+
+  // 取消所有付款人勾選
+  document.querySelectorAll(".payer-checkbox").forEach(cb => {
+    cb.checked = false;
+  });
+
+  // 取消所有分攤人勾選
+  document.querySelectorAll(".sharer-checkbox").forEach(cb => {
+    cb.checked = false;
+  });
+
+  // 重置付款金額欄位
+  document.querySelectorAll("[id^='payerAmount_']").forEach(input => {
     input.value = "";
     input.disabled = true;
   });
+
+  // 重置分攤金額欄位
+  document.querySelectorAll("[id^='sharerAmount_']").forEach(input => {
+    input.value = "";
+    input.disabled = true;
+  });
+
+  // 關閉手動模式
+  manualPayerMode = false;
+  manualSharerMode = false;
 }
 
 
